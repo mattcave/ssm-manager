@@ -87,7 +87,6 @@ Then copy `assets/icons/win/icon.ico` to `assets/icon.ico`. The packager looks f
 
 ## To Do
 
-- **Windows installer** — produce a proper `.exe` installer via a GitHub Actions workflow running on `windows-latest`, triggered on tag push; `maker-squirrel` is already included in `forge.config.js` but cannot run on macOS
+- **macOS universal binary** — current CI build targets arm64 (Apple Silicon); add a second `macos-13` job for x64, or switch to `--arch=universal`
 - **Connection uptime** — display how long each tunnel has been connected
 - **Inactivity disconnect detection** — detect when AWS drops a tunnel due to inactivity and reflect that in the UI automatically
-- **Help / About for Windows** - Mimic the About panel on MacOS for Windows  
