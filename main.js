@@ -14,6 +14,19 @@ const ICON_PATH = path.join(__dirname, 'assets', 'augmentt_ssm_icon_512.png')
 
 app.commandLine.appendSwitch('disable-features', 'AutofillServerCommunication')
 
+// ─── Single Instance Lock ─────────────────────────────────────────────────────
+
+if (!app.requestSingleInstanceLock()) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.focus()
+    }
+  })
+}
+
 // ─── PATH helpers ─────────────────────────────────────────────────────────────
 
 // GUI apps don't always inherit the shell PATH. Prepend common install
