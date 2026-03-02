@@ -36,6 +36,7 @@ module.exports = {
       platforms: ['win32'],
       config: {
         name: 'ssm_manager',
+        authors: 'Augmentt',
         setupExe: 'SSM Manager Setup.exe',
         iconUrl: 'https://raw.githubusercontent.com/mattcave/ssm-manager/main/assets/icon.ico',
         setupIcon: path.join(__dirname, 'assets', 'icon.ico'),
