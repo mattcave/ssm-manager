@@ -1,6 +1,6 @@
 {
   "name": "ssm-manager",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "AWS SSM Tunnel Manager",
   "main": "main.js",
   "scripts": {
