@@ -1,4 +1,9 @@
 const { app, BrowserWindow, ipcMain, shell, Menu } = require('electron')
+
+// Handle Squirrel install/uninstall events on Windows (creates/removes shortcuts).
+// Must be called before anything else.
+if (require('electron-squirrel-startup')) app.quit()
+
 const path = require('path')
 const { spawn } = require('child_process')
 const { homedir } = require('os')
