@@ -7,7 +7,7 @@ if (require('electron-squirrel-startup')) app.quit()
 const path = require('path')
 const { spawn } = require('child_process')
 const { homedir } = require('os')
-const { existsSync, readFileSync, writeFileSync } = require('fs')
+const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
 
 const isDev = process.env.NODE_ENV === 'development'
 const ICON_PATH = path.join(__dirname, 'assets', 'augmentt_ssm_icon_512.png')
@@ -76,6 +76,8 @@ async function checkDependencies () {
 
 const CONFIG_DIR = path.join(homedir(), '.ssm-manager')
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json')
+
+mkdirSync(CONFIG_DIR, { recursive: true })
 
 function checkPortConflicts (config) {
   const portMap = {}
