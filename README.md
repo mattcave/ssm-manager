@@ -90,3 +90,4 @@ Then copy `assets/icons/win/icon.ico` to `assets/icon.ico`. The packager looks f
 - **macOS universal binary** — current CI build targets arm64 (Apple Silicon); add a second `macos-13` job for x64, or switch to `--arch=universal`
 - **Connection uptime** — display how long each tunnel has been connected
 - **Inactivity disconnect detection** — detect when AWS drops a tunnel due to inactivity and reflect that in the UI automatically
+- **Remote config via AWS Parameter Store** — store shared tunnel definitions in Parameter Store (`/ssm-manager/{env}`), fetched at startup using each environment's AWS profile; local config reduced to profile name mappings only; IAM controls per-environment access naturally; cache locally for offline use
