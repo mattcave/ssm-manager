@@ -391,6 +391,7 @@ ipcMain.handle('tunnel:connect', async (_e, envName, tunnelId) => {
     const msg = `Port ${tunnel.localPort} is already in use by ${occupant.command} (PID ${occupant.pid})`
     const ts = new Date().toLocaleTimeString(undefined, { hour12: false })
     mainWindow.webContents.send('tunnel:log', { tunnelId, line: `[${ts}] [error] ${msg}` })
+    mainWindow.webContents.send('tunnel:log', { tunnelId, line: `[${ts}] [hint] If a previous tunnel session is still running, disconnect it first. Otherwise, another process may be holding port ${tunnel.localPort} — check with: lsof -iTCP:${tunnel.localPort} (macOS) or netstat -ano | findstr :${tunnel.localPort} (Windows)` })
     return { error: msg }
   }
 
