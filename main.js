@@ -165,6 +165,27 @@ function buildSSMArgs (env, tunnel) {
   ]
 }
 
+// ─── Error Hints ──────────────────────────────────────────────────────────────
+// Maps a substring of known AWS CLI error output to a plain-English fix hint.
+// Profile name is interpolated where relevant.
+
+const ERROR_HINTS = [
+  {
+    match: 'Token has expired and refresh failed',
+    hint: (profile) => `Your SSO session has expired. Re-authenticate with: aws sso login --profile ${profile}`,
+  },
+  {
+    match: 'TargetNotConnected',
+    hint: () => 'The bastion instance is not connected to SSM. Check that the "bastion" instance ID in your config is correct and that the instance is running with the SSM agent active.',
+  },
+]
+
+function getHint (line, profile) {
+  const lower = line.toLowerCase()
+  const entry = ERROR_HINTS.find(e => lower.includes(e.match.toLowerCase()))
+  return entry ? entry.hint(profile) : null
+}
+
 function connectTunnel (win, env, tunnel) {
   if (activeTunnels.has(tunnel.id)) return
 
@@ -188,7 +209,11 @@ function connectTunnel (win, env, tunnel) {
   logLine(`Connecting → ${tunnel.remoteHost}:${tunnel.remotePort} via local port ${tunnel.localPort} (PID ${proc.pid})`)
 
   function handleOutput (data) {
-    data.toString().split('\n').filter(l => l.trim() !== '').forEach(l => logLine(l))
+    data.toString().split('\n').filter(l => l.trim() !== '').forEach(l => {
+      logLine(l)
+      const hint = getHint(l, env.profile)
+      if (hint) logLine(`[hint] ${hint}`)
+    })
   }
 
   proc.stdout.on('data', handleOutput)
