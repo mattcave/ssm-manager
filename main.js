@@ -105,7 +105,12 @@ function loadConfig () {
 }
 
 function saveConfig (config) {
-  writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2))
+  try {
+    writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2))
+    return { ok: true }
+  } catch (err) {
+    return { error: `Failed to save config: ${err.message}` }
+  }
 }
 
 // ─── Port Check ───────────────────────────────────────────────────────────────
@@ -115,7 +120,24 @@ function saveConfig (config) {
 // Uses lsof on macOS — net.createServer() misses conflicts when the existing
 // listener is on ::1 (IPv6), which is where session-manager-plugin binds.
 function checkPortOccupant (port) {
-  if (isWin) return Promise.resolve(null) // TODO: implement via netstat on Windows
+  if (isWin) {
+    return new Promise((resolve) => {
+      const proc = spawn('netstat', ['-ano'], { stdio: ['ignore', 'pipe', 'ignore'], env: childEnv })
+      let output = ''
+      proc.stdout.on('data', d => { output += d.toString() })
+      proc.on('close', () => {
+        for (const line of output.split('\n')) {
+          if (line.includes(`:${port} `) && line.toUpperCase().includes('LISTENING')) {
+            const pid = line.trim().split(/\s+/).pop()
+            resolve({ command: 'unknown', pid })
+            return
+          }
+        }
+        resolve(null)
+      })
+      proc.on('error', () => resolve(null))
+    })
+  }
 
   return new Promise((resolve) => {
     // -F cpn: field output — c=command name, p=pid, n=network address
@@ -348,10 +370,7 @@ ipcMain.handle('deps:check', () => checkDependencies())
 
 ipcMain.handle('config:load', () => loadConfig())
 
-ipcMain.handle('config:save', (_e, config) => {
-  saveConfig(config)
-  return true
-})
+ipcMain.handle('config:save', (_e, config) => saveConfig(config))
 
 ipcMain.handle('config:open-file', () => {
   shell.openPath(CONFIG_PATH)

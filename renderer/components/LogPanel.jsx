@@ -1,17 +1,27 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, memo } from 'react'
 
 function classifyLine (line) {
   const lower = line.toLowerCase()
   if (/\berror\b|failed|exception|fatal/.test(lower)) return 'log-error'
-  if (/\bwarn(ing)?\b/.test(lower)) return 'log-warn'
+  if (/\bwarn(ing)?\b|\[hint\]/.test(lower)) return 'log-warn'
   return 'log-info'
 }
 
-export default function LogPanel ({ tunnelId, lines, onClear }) {
+export default memo(function LogPanel ({ tunnelId, lines, onClear }) {
+  const containerRef = useRef(null)
   const bottomRef = useRef(null)
+  const isAtBottom = useRef(true)
+
+  function handleScroll () {
+    const el = containerRef.current
+    if (!el) return
+    isAtBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40
+  }
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (isAtBottom.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [lines])
 
   if (!tunnelId) {
@@ -28,7 +38,7 @@ export default function LogPanel ({ tunnelId, lines, onClear }) {
         <span className="log-title">Logs — {tunnelId}</span>
         <button className="btn-clear" onClick={onClear}>Clear</button>
       </div>
-      <div className="log-body">
+      <div className="log-body" ref={containerRef} onScroll={handleScroll}>
         {lines.length === 0
           ? <span className="log-empty">No output yet</span>
           : lines.map((line, i) => (
@@ -39,4 +49,4 @@ export default function LogPanel ({ tunnelId, lines, onClear }) {
       </div>
     </div>
   )
-}
+})

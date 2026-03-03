@@ -16,7 +16,7 @@ export default function TunnelRow ({
     }
   }
 
-  const tooltip = `${tunnel.remoteHost}\nRemote: ${tunnel.remotePort}  ·  Local: ${tunnel.localPort}`
+  const tooltip = `${tunnel.remoteHost}  ·  Remote: ${tunnel.remotePort}  ·  Local: ${tunnel.localPort}`
 
   return (
     <div

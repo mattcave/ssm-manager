@@ -59,20 +59,21 @@ export default function App () {
 
   useEffect(() => {
     async function init () {
-      const deps = await window.api.checkDeps()
+      const [deps, result, active] = await Promise.all([
+        window.api.checkDeps(),
+        window.api.loadConfig(),
+        window.api.getActiveTunnels(),
+      ])
+
       if (!deps.ok) setDepError(deps.error)
 
-      const result = await window.api.loadConfig()
       if (result.error) {
         setConfigError(result.error)
       } else {
         setConfig(result.config)
-        if (result.portWarnings && result.portWarnings.length > 0) {
-          setPortWarnings(result.portWarnings)
-        }
+        if (result.portWarnings?.length > 0) setPortWarnings(result.portWarnings)
       }
 
-      const active = await window.api.getActiveTunnels()
       setActiveTunnels(new Set(active))
 
       const restoredLogs = {}
@@ -153,7 +154,7 @@ export default function App () {
           <div className="port-warning-body">
             <strong>Port conflicts</strong> — Your config file has multiple tunnels assigned to the same local port, which may result in a conflict:
             <ul>
-              {portWarnings.map(w => <li key={w}>{w}</li>)}
+              {portWarnings.map((w, i) => <li key={i}>{w}</li>)}
             </ul>
           </div>
           <button className="port-warning-dismiss" onClick={() => setPortWarnings([])}>✕</button>
