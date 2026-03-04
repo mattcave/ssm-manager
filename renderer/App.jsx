@@ -119,7 +119,8 @@ export default function App () {
   }
 
   function clearLog (tunnelId) {
-    setLogs(prev => ({ ...prev, [tunnelId]: [] }))
+    const ts = new Date().toLocaleTimeString(undefined, { hour12: false })
+    setLogs(prev => ({ ...prev, [tunnelId]: [`[${ts}] [info] Log cleared`] }))
   }
 
   if (!config && !configError) return <div className="loading">Loading...</div>
