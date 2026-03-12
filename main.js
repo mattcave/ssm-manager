@@ -399,6 +399,34 @@ ipcMain.handle('tunnel:connect', async (_e, envName, tunnelId) => {
   return { ok: true }
 })
 
+ipcMain.handle('sso:login', (_e, profile, tunnelId) => {
+  return new Promise((resolve) => {
+    const ts = () => new Date().toLocaleTimeString(undefined, { hour12: false })
+    const log = (line) => mainWindow.webContents.send('tunnel:log', { tunnelId, line: `[${ts()}] [info] ${line}` })
+
+    log(`Running: aws sso login --profile ${profile}`)
+    const proc = spawn('aws', ['sso', 'login', '--profile', profile], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: childEnv,
+    })
+
+    proc.stdout.on('data', d => d.toString().split('\n').filter(Boolean).forEach(log))
+    proc.stderr.on('data', d => d.toString().split('\n').filter(Boolean).forEach(log))
+
+    proc.on('close', (code) => {
+      if (code === 0) {
+        mainWindow.webContents.send('tunnel:log', { tunnelId, line: `[${ts()}] [info] Re-authenticated successfully. You can now reconnect.` })
+        resolve({ ok: true })
+      } else {
+        mainWindow.webContents.send('tunnel:log', { tunnelId, line: `[${ts()}] [error] SSO login failed (exit code ${code})` })
+        resolve({ error: `SSO login failed (exit code ${code})` })
+      }
+    })
+
+    proc.on('error', (err) => resolve({ error: err.message }))
+  })
+})
+
 ipcMain.handle('tunnel:disconnect', (_e, tunnelId) => {
   disconnectTunnel(tunnelId)
   return { ok: true }

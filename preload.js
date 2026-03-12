@@ -15,6 +15,9 @@ contextBridge.exposeInMainWorld('api', {
   getActiveTunnels: () => ipcRenderer.invoke('tunnel:active'),
   getLogHistory: (tunnelId) => ipcRenderer.invoke('tunnel:log-history', tunnelId),
 
+  // SSO
+  ssoLogin: (profile, tunnelId) => ipcRenderer.invoke('sso:login', profile, tunnelId),
+
   // Events pushed from main process
   onLog: (callback) => ipcRenderer.on('tunnel:log', (_e, data) => callback(data)),
   onTunnelExited: (callback) => ipcRenderer.on('tunnel:exited', (_e, data) => callback(data)),

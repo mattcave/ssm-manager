@@ -441,6 +441,19 @@ body {
 
 .btn-clear:hover { color: var(--text); border-color: var(--text-muted); }
 
+.btn-reauth {
+  margin-left: 10px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--log-warn);
+  background: transparent;
+  color: var(--log-warn);
+  cursor: pointer;
+  vertical-align: text-bottom;
+}
+.btn-reauth:hover { background: var(--log-warn); color: #000; }
+
 .log-body {
   flex: 1;
   min-height: 0;
