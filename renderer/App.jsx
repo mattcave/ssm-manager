@@ -10,6 +10,7 @@ export default function App () {
   const [logs, setLogs] = useState({})
   const [selectedTunnelId, setSelectedTunnelId] = useState(null)
   const [portWarnings, setPortWarnings] = useState([])
+  const [updateInfo, setUpdateInfo] = useState(null)
   const [search, setSearch] = useState('')
   const [sidebarWidth, setSidebarWidth] = useState(320)
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark-blue')
@@ -99,6 +100,19 @@ export default function App () {
       })
     })
 
+    window.api.onUpdateAvailable(info => setUpdateInfo(info))
+
+    window.api.onConfigChanged(result => {
+      if (result.error) {
+        setConfigError(result.error)
+        setConfig(null)
+      } else {
+        setConfig(result.config)
+        setConfigError(null)
+        setPortWarnings(result.portWarnings || [])
+      }
+    })
+
     return () => window.api.removeAllListeners()
   }, [])
 
@@ -148,6 +162,13 @@ export default function App () {
       {configError && (
         <div className="dep-warning">
           <strong>Config error:</strong> {configError}
+        </div>
+      )}
+      {updateInfo && (
+        <div className="update-banner">
+          <span>Version {updateInfo.version} is available.</span>
+          <button className="update-download" onClick={() => window.api.openExternal(updateInfo.url)}>Download</button>
+          <button className="update-dismiss" onClick={() => setUpdateInfo(null)}>✕</button>
         </div>
       )}
       {portWarnings.length > 0 && (

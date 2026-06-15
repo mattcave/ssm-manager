@@ -7,7 +7,8 @@ if (require('electron-squirrel-startup')) app.quit()
 const path = require('path')
 const { spawn } = require('child_process')
 const { homedir } = require('os')
-const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
+const { existsSync, mkdirSync, readFileSync, writeFileSync, watch } = require('fs')
+const https = require('https')
 
 const isDev = process.env.NODE_ENV === 'development'
 const ICON_PATH = path.join(__dirname, 'assets', 'augmentt_ssm_icon_512.png')
@@ -302,6 +303,43 @@ function showAboutWindow () {
   aboutWindow.on('closed', () => { aboutWindow = null })
 }
 
+// ─── Update Check ─────────────────────────────────────────────────────────────
+
+function isNewerVersion (latest, current) {
+  const a = latest.split('.').map(Number)
+  const b = current.split('.').map(Number)
+  for (let i = 0; i < 3; i++) {
+    if ((a[i] || 0) > (b[i] || 0)) return true
+    if ((a[i] || 0) < (b[i] || 0)) return false
+  }
+  return false
+}
+
+function checkForUpdates () {
+  const opts = {
+    hostname: 'api.github.com',
+    path: '/repos/mattcave/ssm-manager/releases/latest',
+    headers: { 'User-Agent': 'ssm-manager-app' },
+  }
+  https.get(opts, (res) => {
+    let data = ''
+    res.on('data', chunk => { data += chunk })
+    res.on('end', () => {
+      try {
+        const release = JSON.parse(data)
+        const latest = release.tag_name?.replace(/^v/, '')
+        const current = app.getVersion()
+        if (latest && isNewerVersion(latest, current)) {
+          mainWindow?.webContents.send('update:available', {
+            version: release.tag_name,
+            url: release.html_url,
+          })
+        }
+      } catch {}
+    })
+  }).on('error', () => {}) // silent fail on network error
+}
+
 // ─── Application Menu ─────────────────────────────────────────────────────────
 
 function buildMenu () {
@@ -329,6 +367,11 @@ function buildMenu () {
   template.push({
     role: 'help',
     submenu: [
+      {
+        label: 'Check for Updates…',
+        click: () => checkForUpdates()
+      },
+      { type: 'separator' },
       {
         label: 'About SSM Manager',
         click: () => process.platform === 'darwin' ? app.showAboutPanel() : showAboutWindow()
@@ -364,6 +407,16 @@ function createWindow () {
   } else {
     mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'))
   }
+
+  let configDebounce = null
+  const configWatcher = watch(CONFIG_DIR, { persistent: false }, (_, filename) => {
+    if (filename !== 'config.json') return
+    clearTimeout(configDebounce)
+    configDebounce = setTimeout(() => {
+      mainWindow.webContents.send('config:changed', loadConfig())
+    }, 100)
+  })
+  mainWindow.on('closed', () => configWatcher.close())
 }
 
 // ─── IPC Handlers ─────────────────────────────────────────────────────────────
@@ -377,6 +430,10 @@ ipcMain.handle('config:save', (_e, config) => saveConfig(config))
 ipcMain.handle('config:open-file', () => {
   shell.openPath(CONFIG_PATH)
 })
+
+ipcMain.handle('shell:open-external', (_e, url) => shell.openExternal(url))
+
+ipcMain.handle('update:check', () => checkForUpdates())
 
 ipcMain.handle('tunnel:connect', async (_e, envName, tunnelId) => {
   const { config, error } = loadConfig()
@@ -456,6 +513,7 @@ app.whenReady().then(() => {
   }
   Menu.setApplicationMenu(buildMenu())
   createWindow()
+  setTimeout(checkForUpdates, 3000)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
